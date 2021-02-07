@@ -13,12 +13,12 @@ plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
     id("org.jetbrains.kotlin.jvm") version "1.4.30"
 
-    `version-catalog`
+//    `version-catalog`
     `maven-publish`
 }
 
 group = "com.github.elect86"
-version = "0.0.2"
+version = "0.0.3"
 
 repositories {
     // Use jcenter for resolving dependencies.
@@ -67,13 +67,27 @@ val check by tasks.getting(Task::class) {
 }
 
 
+//
+//publishing {
+//    publications {
+//        create<MavenPublication>("maven") {
+//            from(components["versionCatalog"])
+//        }
+//    }
+//    publications.forEach { println("pub:${it.name}") }
+//}
 
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["versionCatalog"])
-        }
-    }
-    publications.forEach { println("pub:${it.name}") }
-}
+
+
+//catalog {
+//    // declare the aliases, bundles and versions in this block
+//    versionCatalog {
+//        alias("my-lib").to("com.mycompany:mylib:1.2")
+//    }
+//
+//    // declare the plugin versions with in this block
+//    plugins {
+//        id("my.awesome.plugin").version("1.5")
+//    }
+//}
 
