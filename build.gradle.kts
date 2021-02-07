@@ -18,7 +18,7 @@ plugins {
 }
 
 group = "com.github.elect86"
-version = "0.0.1"
+version = "0.0.2"
 
 repositories {
     // Use jcenter for resolving dependencies.
