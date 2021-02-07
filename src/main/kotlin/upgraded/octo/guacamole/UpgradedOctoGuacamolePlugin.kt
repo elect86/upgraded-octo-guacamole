@@ -4,13 +4,14 @@
 package upgraded.octo.guacamole
 
 import org.gradle.api.Plugin
+import org.gradle.api.Project
 import org.gradle.api.initialization.Settings
 
 /**
  * A simple 'hello world' plugin.
  */
-class UpgradedOctoGuacamolePlugin : Plugin<Settings> {
-    override fun apply(settings: Settings) {
+class UpgradedOctoGuacamolePlugin : Plugin<Project> {
+    override fun apply(settings: Project) {
 //        settings.dependencyResolutionManagement {
 //            it.versionCatalogs {
 //                it.create("libs") {
