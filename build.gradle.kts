@@ -13,7 +13,7 @@ plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
     id("org.jetbrains.kotlin.jvm") version "1.4.30"
 
-//    `version-catalog`
+    //    `version-catalog`
     `maven-publish`
 }
 
@@ -40,14 +40,14 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 }
 
-//gradlePlugin {
-//    // Define the plugin
-//    val greeting by plugins.creating {
-//        id = "upgraded.octo.guacamole.greeting"
-//        implementationClass = "upgraded.octo.guacamole.UpgradedOctoGuacamolePlugin"
-//    }
-//}
-//
+gradlePlugin {
+    // Define the plugin
+    val greeting by plugins.creating {
+        id = "guacamole"
+        implementationClass = "upgraded.octo.guacamole.UpgradedOctoGuacamolePlugin"
+    }
+}
+
 //// Add a source set for the functional test suite
 //val functionalTestSourceSet = sourceSets.create("functionalTest") {
 //}
@@ -66,6 +66,11 @@ dependencies {
 //    dependsOn(functionalTest)
 //}
 
+//configurations.all {
+//    attributes {
+//        attribute(Category.CATEGORY_ATTRIBUTE, Category.REGULAR_PLATFORM)
+//    }
+//}
 
 //
 //publishing {
@@ -76,7 +81,6 @@ dependencies {
 //    }
 //    publications.forEach { println("pub:${it.name}") }
 //}
-
 
 
 //catalog {
