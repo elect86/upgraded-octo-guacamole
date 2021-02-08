@@ -120,18 +120,16 @@ fun MutableVersionCatalogContainer.parseDeps(node: Node) {
 
     var lib = Lib.values()[1] // libs is default, let's fill first all the others that come first in the given order
 
-    fun Lib.catalog(): VersionCatalogBuilder = findByName(name) ?: create(name)
-
     fun catalog(group: String): VersionCatalogBuilder {
-        val name = group.substringAfterLast('.')
-        return when {
-            lib in name -> lib // sciJava in org.scijava
+        lib = when {
+            lib in group -> lib // sciJava in org.scijava
             !lib.isLast -> {  // current lib is terminated
                 lib = lib.next
                 lib
             }
             else -> Lib.libs // default, misc
-        }.catalog()
+        }
+        return findByName(lib.name) ?: create(lib.name)
     }
 
     for (i in 0 until node.childNodes.length) {
@@ -141,6 +139,11 @@ fun MutableVersionCatalogContainer.parseDeps(node: Node) {
 
             val (group, art, vers) = node.gav
             val version = versions[vers.drop(2).dropLast(1)]!!
+            val dupl = group.substringAfterLast('.')
+            val artifact = when {
+                art.startsWith(dupl) -> art.drop(dupl.length + 1) // org.scijava:scijava-common -> common
+                else -> art
+            }
             catalog(group).alias(art.camelCase).to("$group:$art:$version")
             println("catalog($group).alias(${art.camelCase}).to($group:$art:$version)")
         }
