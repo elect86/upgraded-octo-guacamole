@@ -82,7 +82,6 @@ fun parseDeps(node: Node) {
         if (dep.nodeType == Node.ELEMENT_NODE) {
 
             val (group, art, vers) = dep.gav
-            println("$group, $art, $vers")
             val version = versions[vers.drop(2).dropLast(9)]!! // ${batch-processor.version}
             val dupl = group.substringAfterLast('.')
             val artifact = when {
@@ -90,7 +89,7 @@ fun parseDeps(node: Node) {
                 else -> art
             }
             catalog(group)//.alias(artifact).to("$group:$art:$version")
-            println("catalog($group).alias(${art.camelCase}).to($group:$art:$version)")
+            println("catalog($group).alias(${artifact.camelCase}).to($group:$art:$version)")
         }
     }
 }

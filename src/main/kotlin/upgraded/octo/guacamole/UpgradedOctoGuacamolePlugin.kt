@@ -53,9 +53,9 @@ fun MutableVersionCatalogContainer.parsePom(artifact: String, version: String) {
             "parent" -> parseParent(item)
             "properties" -> parseProps(item)
             "dependencyManagement" -> {
-                for(j in 0 until item.childNodes.length) {
+                for (j in 0 until item.childNodes.length) {
                     val deps = item.childNodes.item(j)
-                    if(deps.nodeType == Node.ELEMENT_NODE) // <dependencies/>
+                    if (deps.nodeType == Node.ELEMENT_NODE) // <dependencies/>
                         parseDeps(deps)
                 }
             }
@@ -145,7 +145,7 @@ fun MutableVersionCatalogContainer.parseDeps(node: Node) {
             val version = versions[vers.drop(2).dropLast(9)]!! // ${batch-processor.version}
             val dupl = group.substringAfterLast('.')
             val artifact = when {
-                art.startsWith(dupl) -> art.drop(dupl.length + 1) // org.scijava:scijava-common -> common
+                art.startsWith(dupl) -> art.drop(dupl.length + 1).ifEmpty { "core" } // net.imagej:imagej
                 else -> art
             }
             catalog(group).alias(artifact).to("$group:$art:$version")
