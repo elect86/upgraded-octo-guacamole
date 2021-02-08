@@ -148,12 +148,15 @@ fun MutableVersionCatalogContainer.parseDeps(node: Node) {
                 art.startsWith(dupl) -> art.drop(dupl.length + 1).ifEmpty { "core" } // net.imagej:imagej
                 else -> art
             }
-            catalog(group).alias(artifact).to("$group:$art:$version")
+            val gav = "$group:$art:$version"
+            if (gav !in deps) // skip duplicates, ie <classifier>tests</classifier>
+                catalog(group).alias(artifact).to(gav)
         }
     }
 }
 
 val versions = mutableMapOf<String, String>()
+val deps = ArrayList<String>()
 
 val snakeRegex = "-[a-zA-Z]".toRegex()
 
