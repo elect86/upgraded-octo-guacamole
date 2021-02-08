@@ -5,18 +5,155 @@ package upgraded.octo.guacamole
 
 import org.gradle.api.Plugin
 import org.gradle.api.initialization.Settings
+import org.gradle.api.initialization.dsl.VersionCatalogBuilder
+import org.gradle.api.initialization.resolve.MutableVersionCatalogContainer
+import org.w3c.dom.Node
+import org.xml.sax.InputSource
+import java.io.StringReader
+import java.net.URL
+import java.util.*
+import javax.xml.parsers.DocumentBuilderFactory
+import kotlin.collections.ArrayList
 
-/**
- * A simple 'hello world' plugin.
- */
+
+object Pom {
+    val artifact = "pom-scijava"
+    val version = "30.0.0"
+}
+
 class UpgradedOctoGuacamolePlugin : Plugin<Settings> {
+
     override fun apply(settings: Settings) {
-        settings.dependencyResolutionManagement {
-            it.versionCatalogs {
-                it.create("whatever") {
-                    it.alias("commons-lang3").to("org.apache.commons:commons-lang3:3.9")
+
+        settings.dependencyResolutionManagement.versionCatalogs.parsePom(Pom.artifact, Pom.version)
+
+        // clean
+    }
+}
+
+fun readPom(artifact: String, version: String): String {
+    val domain = "https://maven.scijava.org/content/groups/public/org/scijava/"
+    val spec = "$domain$artifact/$version/$artifact-$version.pom"
+    return URL(spec).readText()
+}
+
+fun MutableVersionCatalogContainer.parsePom(artifact: String, version: String) {
+
+    val dbFactory = DocumentBuilderFactory.newInstance()
+    val dBuilder = dbFactory.newDocumentBuilder()
+    val pom = readPom(artifact, version)
+    val doc = dBuilder.parse(InputSource(StringReader(pom)))
+
+    //optional, but recommended
+    //read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
+    doc.documentElement.normalize()
+
+    for (i in 0 until doc.documentElement.childNodes.length) {
+        val child = doc.documentElement.childNodes.item(i)
+
+        when (child.nodeName) {
+            "parent" -> parseParent(child)
+            "properties" -> parseProps(child)
+            "dependencyManagement" -> parseDeps(child.childNodes.item(0)) // <dependencies/>
+        }
+    }
+}
+
+fun MutableVersionCatalogContainer.parseParent(node: Node) {
+    val (group, art, vers) = node.gav
+    if (group == "org.scijava")
+        parsePom(art, vers)
+}
+
+val Node.gav: Array<String>
+    get() {
+        lateinit var group: String
+        lateinit var art: String
+        lateinit var vers: String
+
+        for (i in 0 until childNodes.length) {
+            val child = childNodes.item(i)
+
+            if (child.nodeType == Node.ELEMENT_NODE)
+                when (child.nodeName) {
+                    "groupId" -> group = child.textContent
+                    "artifactId" -> art = child.textContent
+                    "version" -> vers = child.textContent
                 }
+        }
+        return arrayOf(group, art, vers)
+    }
+
+fun parseProps(node: Node) {
+
+    for (i in 0 until node.childNodes.length) {
+        val prop = node.childNodes.item(i)
+
+        if (prop.nodeType == Node.ELEMENT_NODE && prop.nodeName.endsWith(".version")) {
+
+            val dep = prop.nodeName.dropLast(8)
+            val content = prop.textContent
+            versions[dep] = when {
+                content.startsWith("\${") && content.endsWith(".version}") -> { // ${imagej1.version}
+                    val resolve = content.drop(2).dropLast(9)
+                    versions[resolve] ?: error("cannot resolve $resolve")
+                }
+                else -> content
             }
         }
     }
 }
+
+enum class Lib {
+    libs, sciJava;
+
+    val isLast: Boolean
+        get() = values().last() == this
+
+    val next: Lib
+        get() = values()[ordinal + 1]
+}
+
+operator fun String.contains(lib: Lib) = contains(lib.name, ignoreCase = true)
+
+fun MutableVersionCatalogContainer.parseDeps(node: Node) {
+
+    var lib = Lib.values()[1] // libs is default, let's fill first all the others that come first in the given order
+
+    fun Lib.catalog(): VersionCatalogBuilder = findByName(name) ?: create(name)
+
+    fun catalog(group: String): VersionCatalogBuilder {
+        val name = group.substringAfterLast('.')
+        if (lib in name) // sciJava in org.scijava
+            lib.catalog()
+        else
+            if(!lib.isLast) {  // current lib is terminated
+                lib = next
+                lib.catalog()
+            }
+            else // default, misc
+                Lib.libs.catalog()
+    }
+
+    for (i in 0 until node.childNodes.length) {
+        val dep = node.childNodes.item(i)
+
+        if (dep.nodeType == Node.ELEMENT_NODE) {
+
+            val (group, art, vers) = node.gav
+            val version = versions[vers.drop(2).dropLast(1)]!!
+            catalog(group).alias(art.camelCase).to("$group:$art:$version")
+            println("catalog($group).alias(${art.camelCase}).to($group:$art:$version)")
+        }
+    }
+}
+
+val versions = mutableMapOf<String, String>()
+val deps = ArrayList<String>()
+
+val snakeRegex = "-[a-zA-Z]".toRegex()
+
+val String.camelCase: String
+    get() = replace(snakeRegex) {
+        it.value.replace("-", "").toUpperCase()
+    }
