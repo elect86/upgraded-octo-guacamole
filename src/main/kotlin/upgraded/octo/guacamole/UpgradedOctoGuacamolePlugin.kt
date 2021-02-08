@@ -13,8 +13,8 @@ class UpgradedOctoGuacamolePlugin : Plugin<Settings> {
     override fun apply(settings: Settings) {
         settings.dependencyResolutionManagement {
             it.versionCatalogs {
-                it.create("libs") {
-                    it.alias("groovyCore").to("org.codehaus.groovy:groovy:3.0.5")
+                it.create("whatever") {
+                    it.alias("commons-lang3").to("org.apache.commons:commons-lang3:3.9")
                 }
             }
         }
