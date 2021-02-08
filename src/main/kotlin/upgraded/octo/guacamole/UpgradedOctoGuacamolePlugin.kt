@@ -150,10 +150,9 @@ fun MutableVersionCatalogContainer.parseDeps(node: Node) {
             // net.imagej:imagej
             // io.scif:scifio
             if (art.startsWith(dupl))
-                art = art.drop(dupl.length)
+                art = art.drop(dupl.length).ifEmpty { "core" }
             if(art[0] == '-')
                 art = art.drop(1)
-            art = art.ifEmpty { "core" }
             val gav = "$group:$art:$version"
             if (gav !in deps) { // skip duplicates, ie <classifier>tests</classifier>
                 deps += gav
