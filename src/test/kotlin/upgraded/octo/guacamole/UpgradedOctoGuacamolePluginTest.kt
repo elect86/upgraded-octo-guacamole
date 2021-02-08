@@ -13,13 +13,14 @@ import kotlin.test.Test
  * A simple unit test for the 'upgraded.octo.guacamole.greeting' plugin.
  */
 class UpgradedOctoGuacamolePluginTest {
-    @Test fun `plugin registers task`() {
+    @Test
+    fun `plugin registers task`() {
         // Create a test project and apply the plugin
-//        val project = ProjectBuilder.builder().build()
-//        project.plugins.apply("guacamole")
+        //        val project = ProjectBuilder.builder().build()
+        //        project.plugins.apply("guacamole")
 
         // Verify the result
-//        assertNotNull(project.tasks.findByName("greeting"))
+        //        assertNotNull(project.tasks.findByName("greeting"))
 
         parsePom(Pom.artifact, Pom.version)
     }
@@ -43,9 +44,9 @@ fun parsePom(artifact: String, version: String) {
             "parent" -> parseParent(item)
             "properties" -> parseProps(item)
             "dependencyManagement" -> {
-                for(j in 0 until item.childNodes.length) {
+                for (j in 0 until item.childNodes.length) {
                     val deps = item.childNodes.item(j)
-                    if(deps.nodeType == Node.ELEMENT_NODE) // <dependencies/>
+                    if (deps.nodeType == Node.ELEMENT_NODE) // <dependencies/>
                         parseDeps(deps)
                 }
             }
@@ -64,8 +65,8 @@ fun parseDeps(node: Node) {
     println("parseDeps")
     var lib = Lib.values()[1] // libs is default, let's fill first all the others that come first in the given order
 
-    fun catalog(group: String) {
-        lib = when {
+    fun catalog(group: String): Lib =
+        when {
             lib in group -> lib // sciJava in org.scijava
             !lib.isLast -> {  // current lib is terminated
                 lib = lib.next
@@ -73,23 +74,29 @@ fun parseDeps(node: Node) {
             }
             else -> Lib.libs // default, misc
         }
-//        return findByName(lib.name) ?: create(lib.name)
-    }
+    //        return findByName(lib.name) ?: create(lib.name)
 
     for (i in 0 until node.childNodes.length) {
         val dep = node.childNodes.item(i)
 
         if (dep.nodeType == Node.ELEMENT_NODE) {
 
-            val (group, art, vers) = dep.gav
+            var (group, art, vers) = dep.gav
             val version = versions[vers.drop(2).dropLast(9)]!! // ${batch-processor.version}
             val dupl = group.substringAfterLast('.')
-            val artifact = when {
-                art.startsWith(dupl) -> art.drop(dupl.length + 1) // org.scijava:scijava-common -> common
-                else -> art
+            // org.scijava:scijava-cache
+            // net.imagej:imagej
+            // io.scif:scifio
+            if (art.startsWith(dupl))
+                art = art.drop(dupl.length)
+            if(art[0] == '-')
+                art = art.drop(1)
+            art = art.ifEmpty { "core" }
+            val gav = "$group:$art:$version"
+            if (gav !in deps) { // skip duplicates, ie <classifier>tests</classifier>
+                deps += gav
+                println("catalog(${catalog(group).ref}).alias(${art.camelCase}).to($group:$art:$version)")
             }
-            catalog(group)//.alias(artifact).to("$group:$art:$version")
-            println("catalog($group).alias(${artifact.camelCase}).to($group:$art:$version)")
         }
     }
 }

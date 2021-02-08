@@ -108,8 +108,10 @@ fun parseProps(node: Node) {
     }
 }
 
-enum class Lib {
-    libs, sciJava;
+enum class Lib(custom: String? = null) {
+    libs, sciJava, imagej, imglib2, scifio("scif");
+
+    val ref = custom ?: name
 
     val isLast: Boolean
         get() = values().last() == this
@@ -118,7 +120,7 @@ enum class Lib {
         get() = values()[ordinal + 1]
 }
 
-operator fun String.contains(lib: Lib) = contains(lib.name, ignoreCase = true)
+operator fun String.contains(lib: Lib) = contains(lib.ref, ignoreCase = true)
 
 fun MutableVersionCatalogContainer.parseDeps(node: Node) {
 
@@ -133,7 +135,7 @@ fun MutableVersionCatalogContainer.parseDeps(node: Node) {
             }
             else -> Lib.libs // default, misc
         }
-        return findByName(lib.name) ?: create(lib.name)
+        return findByName(lib.ref) ?: create(lib.ref)
     }
 
     for (i in 0 until node.childNodes.length) {
@@ -141,17 +143,21 @@ fun MutableVersionCatalogContainer.parseDeps(node: Node) {
 
         if (dep.nodeType == Node.ELEMENT_NODE) {
 
-            val (group, art, vers) = dep.gav
+            var (group, art, vers) = dep.gav
             val version = versions[vers.drop(2).dropLast(9)]!! // ${batch-processor.version}
             val dupl = group.substringAfterLast('.')
-            val artifact = when {
-                art.startsWith(dupl) -> art.drop(dupl.length + 1).ifEmpty { "core" } // net.imagej:imagej
-                else -> art
-            }.camelCase
+            // org.scijava:scijava-cache
+            // net.imagej:imagej
+            // io.scif:scifio
+            if (art.startsWith(dupl))
+                art = art.drop(dupl.length)
+            if(art[0] == '-')
+                art = art.drop(1)
+            art = art.ifEmpty { "core" }
             val gav = "$group:$art:$version"
             if (gav !in deps) { // skip duplicates, ie <classifier>tests</classifier>
                 deps += gav
-                catalog(group).alias(artifact).to(gav)
+                catalog(group).alias(art).to(gav)
             }
         }
     }
