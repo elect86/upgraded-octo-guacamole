@@ -9,16 +9,16 @@
 
 rootProject.name = "upgraded-octo-guacamole"
 
-dependencyResolutionManagement {
-    versionCatalogs {
-        create("libs") {
-            alias("groovy-core").to("org.codehaus.groovy:groovy:3.0.5")
-            alias("groovy-json").to("org.codehaus.groovy:groovy-json:3.0.5")
-            alias("groovy-nio").to("org.codehaus.groovy:groovy-nio:3.0.5")
-            alias("commons-lang3").to("org.apache.commons", "commons-lang3").version {
-                strictly("[3.8, 4.0[")
-                prefer("3.9")
-            }
-        }
-    }
-}
+//dependencyResolutionManagement {
+//    versionCatalogs {
+//        create("libs") {
+//            alias("groovy-core").to("org.codehaus.groovy:groovy:3.0.5")
+//            alias("groovy-json").to("org.codehaus.groovy:groovy-json:3.0.5")
+//            alias("groovy-nio").to("org.codehaus.groovy:groovy-nio:3.0.5")
+//            alias("commons-lang3").to("org.apache.commons", "commons-lang3").version {
+//                strictly("[3.8, 4.0[")
+//                prefer("3.9")
+//            }
+//        }
+//    }
+//}
