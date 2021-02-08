@@ -10,6 +10,7 @@ import org.gradle.api.initialization.resolve.MutableVersionCatalogContainer
 import org.w3c.dom.Node
 import org.xml.sax.InputSource
 import java.io.StringReader
+import java.lang.StringBuilder
 import java.net.URL
 import javax.xml.parsers.DocumentBuilderFactory
 
@@ -151,7 +152,7 @@ fun MutableVersionCatalogContainer.parseDeps(node: Node) {
             // io.scif:scifio
             if (art.startsWith(dupl))
                 art = art.drop(dupl.length).ifEmpty { "core" }
-            if(art[0] == '-')
+            if (art[0] == '-')
                 art = art.drop(1)
             val gav = "$group:$art:$version"
             if (gav !in deps) { // skip duplicates, ie <classifier>tests</classifier>
@@ -165,9 +166,28 @@ fun MutableVersionCatalogContainer.parseDeps(node: Node) {
 val versions = mutableMapOf<String, String>()
 val deps = mutableSetOf<String>()
 
-val snakeRegex = "-[a-zA-Z]".toRegex()
-
+// Anisotropic_Diffusion_2D
+// Arrow_
 val String.camelCase: String
-    get() = replace(snakeRegex) {
-        it.value.replace("-", "").toUpperCase()
+    get() {
+        val builder = StringBuilder()
+        var capitalize = false
+        for (c in this)
+            if (c == '-' || c == '_')
+                capitalize = true
+            else {
+                builder.append(when {
+                    capitalize -> {
+                        capitalize = false
+                        c.toUpperCase()
+                    }
+                    else -> c
+                })
+            }
+        return builder.toString()
     }
+
+fun main() {
+    println("Anisotropic_Diffusion_2D".camelCase)
+    println("Arrow_".camelCase)
+}
