@@ -124,15 +124,14 @@ fun MutableVersionCatalogContainer.parseDeps(node: Node) {
 
     fun catalog(group: String): VersionCatalogBuilder {
         val name = group.substringAfterLast('.')
-        if (lib in name) // sciJava in org.scijava
-            lib.catalog()
-        else
-            if(!lib.isLast) {  // current lib is terminated
-                lib = next
-                lib.catalog()
+        return when {
+            lib in name -> lib // sciJava in org.scijava
+            !lib.isLast -> {  // current lib is terminated
+                lib = lib.next
+                lib
             }
-            else // default, misc
-                Lib.libs.catalog()
+            else -> Lib.libs // default, misc
+        }.catalog()
     }
 
     for (i in 0 until node.childNodes.length) {
