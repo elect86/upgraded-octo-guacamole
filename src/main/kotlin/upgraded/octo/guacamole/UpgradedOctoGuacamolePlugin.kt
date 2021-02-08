@@ -144,7 +144,7 @@ fun MutableVersionCatalogContainer.parseDeps(node: Node) {
                 art.startsWith(dupl) -> art.drop(dupl.length + 1) // org.scijava:scijava-common -> common
                 else -> art
             }
-            catalog(group).alias(art.camelCase).to("$group:$art:$version")
+            catalog(group).alias(artifact).to("$group:$art:$version")
             println("catalog($group).alias(${art.camelCase}).to($group:$art:$version)")
         }
     }
