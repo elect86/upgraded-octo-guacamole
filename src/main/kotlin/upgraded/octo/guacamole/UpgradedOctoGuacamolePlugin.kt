@@ -11,9 +11,7 @@ import org.w3c.dom.Node
 import org.xml.sax.InputSource
 import java.io.StringReader
 import java.net.URL
-import java.util.*
 import javax.xml.parsers.DocumentBuilderFactory
-import kotlin.collections.ArrayList
 
 
 object Pom {
@@ -27,7 +25,7 @@ class UpgradedOctoGuacamolePlugin : Plugin<Settings> {
 
         settings.dependencyResolutionManagement.versionCatalogs.parsePom(Pom.artifact, Pom.version)
 
-        // clean
+        // clean versions?
     }
 }
 
@@ -49,12 +47,18 @@ fun MutableVersionCatalogContainer.parsePom(artifact: String, version: String) {
     doc.documentElement.normalize()
 
     for (i in 0 until doc.documentElement.childNodes.length) {
-        val child = doc.documentElement.childNodes.item(i)
+        val item = doc.documentElement.childNodes.item(i)
 
-        when (child.nodeName) {
-            "parent" -> parseParent(child)
-            "properties" -> parseProps(child)
-            "dependencyManagement" -> parseDeps(child.childNodes.item(0)) // <dependencies/>
+        when (item.nodeName) {
+            "parent" -> parseParent(item)
+            "properties" -> parseProps(item)
+            "dependencyManagement" -> {
+                for(j in 0 until item.childNodes.length) {
+                    val deps = item.childNodes.item(j)
+                    if(deps.nodeType == Node.ELEMENT_NODE) // <dependencies/>
+                        parseDeps(deps)
+                }
+            }
         }
     }
 }
@@ -137,21 +141,19 @@ fun MutableVersionCatalogContainer.parseDeps(node: Node) {
 
         if (dep.nodeType == Node.ELEMENT_NODE) {
 
-            val (group, art, vers) = node.gav
-            val version = versions[vers.drop(2).dropLast(1)]!!
+            val (group, art, vers) = dep.gav
+            val version = versions[vers.drop(2).dropLast(9)]!! // ${batch-processor.version}
             val dupl = group.substringAfterLast('.')
             val artifact = when {
                 art.startsWith(dupl) -> art.drop(dupl.length + 1) // org.scijava:scijava-common -> common
                 else -> art
             }
             catalog(group).alias(artifact).to("$group:$art:$version")
-            println("catalog($group).alias(${art.camelCase}).to($group:$art:$version)")
         }
     }
 }
 
 val versions = mutableMapOf<String, String>()
-val deps = ArrayList<String>()
 
 val snakeRegex = "-[a-zA-Z]".toRegex()
 

@@ -3,9 +3,11 @@
  */
 package upgraded.octo.guacamole
 
-import org.gradle.testfixtures.ProjectBuilder
+import org.w3c.dom.Node
+import org.xml.sax.InputSource
+import java.io.StringReader
+import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.test.Test
-import kotlin.test.assertNotNull
 
 /**
  * A simple unit test for the 'upgraded.octo.guacamole.greeting' plugin.
@@ -14,9 +16,81 @@ class UpgradedOctoGuacamolePluginTest {
     @Test fun `plugin registers task`() {
         // Create a test project and apply the plugin
 //        val project = ProjectBuilder.builder().build()
-//        project.plugins.apply("upgraded.octo.guacamole.greeting")
-//
-//        // Verify the result
+//        project.plugins.apply("guacamole")
+
+        // Verify the result
 //        assertNotNull(project.tasks.findByName("greeting"))
+
+        parsePom(Pom.artifact, Pom.version)
+    }
+}
+
+fun parsePom(artifact: String, version: String) {
+
+    val dbFactory = DocumentBuilderFactory.newInstance()
+    val dBuilder = dbFactory.newDocumentBuilder()
+    val pom = readPom(artifact, version)
+    val doc = dBuilder.parse(InputSource(StringReader(pom)))
+
+    //optional, but recommended
+    //read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
+    doc.documentElement.normalize()
+
+    for (i in 0 until doc.documentElement.childNodes.length) {
+        val item = doc.documentElement.childNodes.item(i)
+
+        when (item.nodeName) {
+            "parent" -> parseParent(item)
+            "properties" -> parseProps(item)
+            "dependencyManagement" -> {
+                for(j in 0 until item.childNodes.length) {
+                    val deps = item.childNodes.item(j)
+                    if(deps.nodeType == Node.ELEMENT_NODE) // <dependencies/>
+                        parseDeps(deps)
+                }
+            }
+        }
+    }
+}
+
+fun parseParent(node: Node) {
+    println("parseParent")
+    val (group, art, vers) = node.gav
+    if (group == "org.scijava")
+        parsePom(art, vers)
+}
+
+fun parseDeps(node: Node) {
+    println("parseDeps")
+    var lib = Lib.values()[1] // libs is default, let's fill first all the others that come first in the given order
+
+    fun catalog(group: String) {
+        lib = when {
+            lib in group -> lib // sciJava in org.scijava
+            !lib.isLast -> {  // current lib is terminated
+                lib = lib.next
+                lib
+            }
+            else -> Lib.libs // default, misc
+        }
+//        return findByName(lib.name) ?: create(lib.name)
+    }
+
+    for (i in 0 until node.childNodes.length) {
+        val dep = node.childNodes.item(i)
+
+        if (dep.nodeType == Node.ELEMENT_NODE) {
+
+            val (group, art, vers) = dep.gav
+            println("$group, $art, $vers")
+            val version = versions[vers.drop(2).dropLast(9)]!! // ${batch-processor.version}
+            val dupl = group.substringAfterLast('.')
+            val artifact = when {
+                art.startsWith(dupl) -> art.drop(dupl.length + 1) // org.scijava:scijava-common -> common
+                else -> art
+            }
+            catalog(group)//.alias(artifact).to("$group:$art:$version")
+            println("catalog($group).alias(${art.camelCase}).to($group:$art:$version)")
+        }
     }
 }
