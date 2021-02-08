@@ -144,17 +144,18 @@ fun MutableVersionCatalogContainer.parseDeps(node: Node) {
 
         if (dep.nodeType == Node.ELEMENT_NODE) {
 
-            var (group, art, vers) = dep.gav
+            val (group, artifact, vers) = dep.gav
             val version = versions[vers.drop(2).dropLast(9)]!! // ${batch-processor.version}
             val dupl = group.substringAfterLast('.')
             // org.scijava:scijava-cache
             // net.imagej:imagej
             // io.scif:scifio
+            var art = artifact
             if (art.startsWith(dupl))
                 art = art.drop(dupl.length).ifEmpty { "core" }
             if (art[0] == '-')
                 art = art.drop(1)
-            val gav = "$group:$art:$version"
+            val gav = "$group:$artifact:$version"
             if (gav !in deps) { // skip duplicates, ie <classifier>tests</classifier>
                 deps += gav
                 catalog(group).alias(art).to(gav)
@@ -186,8 +187,3 @@ val String.camelCase: String
             }
         return builder.toString()
     }
-
-fun main() {
-    println("Anisotropic_Diffusion_2D".camelCase)
-    println("Arrow_".camelCase)
-}
