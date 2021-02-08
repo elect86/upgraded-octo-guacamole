@@ -149,14 +149,16 @@ fun MutableVersionCatalogContainer.parseDeps(node: Node) {
                 else -> art
             }.camelCase
             val gav = "$group:$art:$version"
-            if (gav !in deps) // skip duplicates, ie <classifier>tests</classifier>
+            if (gav !in deps) { // skip duplicates, ie <classifier>tests</classifier>
+                deps += gav
                 catalog(group).alias(artifact).to(gav)
+            }
         }
     }
 }
 
 val versions = mutableMapOf<String, String>()
-val deps = ArrayList<String>()
+val deps = mutableSetOf<String>()
 
 val snakeRegex = "-[a-zA-Z]".toRegex()
 
