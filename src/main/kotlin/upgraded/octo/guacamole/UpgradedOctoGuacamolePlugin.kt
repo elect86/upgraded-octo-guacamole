@@ -147,7 +147,7 @@ fun MutableVersionCatalogContainer.parseDeps(node: Node) {
             val artifact = when {
                 art.startsWith(dupl) -> art.drop(dupl.length + 1).ifEmpty { "core" } // net.imagej:imagej
                 else -> art
-            }
+            }.camelCase
             val gav = "$group:$art:$version"
             if (gav !in deps) // skip duplicates, ie <classifier>tests</classifier>
                 catalog(group).alias(artifact).to(gav)
