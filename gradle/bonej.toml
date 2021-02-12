@@ -1,0 +1,6 @@
+[dependencies]
+plugins = "org.bonej:bonej-plugins:7.0.7"
+ops = "org.bonej:bonej-ops:7.0.7"
+legacyPlugins = "org.bonej:bonej-legacy-plugins_:7.0.7"
+legacyUtil = "org.bonej:bonej-legacy-util_:7.0.7"
+utilities = "org.bonej:bonej-utilities:7.0.7"

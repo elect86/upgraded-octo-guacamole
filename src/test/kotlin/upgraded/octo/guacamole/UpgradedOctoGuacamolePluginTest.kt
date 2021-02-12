@@ -5,6 +5,7 @@ package upgraded.octo.guacamole
 
 import org.w3c.dom.Node
 import org.xml.sax.InputSource
+import java.io.File
 import java.io.StringReader
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.test.Test
@@ -12,6 +13,9 @@ import kotlin.test.Test
 /**
  * A simple unit test for the 'upgraded.octo.guacamole.greeting' plugin.
  */
+
+val projectDir = File(".").absolutePath
+
 class UpgradedOctoGuacamolePluginTest {
     @Test
     fun `plugin registers task`() {
@@ -23,6 +27,11 @@ class UpgradedOctoGuacamolePluginTest {
         //        assertNotNull(project.tasks.findByName("greeting"))
 
         parsePom(Pom.artifact, Pom.version)
+
+        Lib.values().forEach {
+            val dst = File("$projectDir/gradle/${it.filename}.toml")
+            dst.writeText(it.catalog.toString())
+        }
     }
 }
 
@@ -63,38 +72,31 @@ fun parseParent(node: Node) {
 
 fun parseDeps(node: Node) {
     println("parseDeps")
-    var lib = Lib.values()[1] // libs is default, let's fill first all the others that come first in the given order
-
-    fun catalog(group: String): Lib =
-        when {
-            lib in group -> lib // sciJava in org.scijava
-            !lib.isLast -> {  // current lib is terminated
-                lib = lib.next
-                lib
-            }
-            else -> Lib.libs // default, misc
-        }
-    //        return findByName(lib.name) ?: create(lib.name)
 
     for (i in 0 until node.childNodes.length) {
         val dep = node.childNodes.item(i)
 
         if (dep.nodeType == Node.ELEMENT_NODE) {
 
-            var (group, art, vers) = dep.gav
-            val version = versions[vers.drop(2).dropLast(9)]!! // ${batch-processor.version}
-            val dupl = group.substringAfterLast('.')
-            // org.scijava:scijava-cache
-            // net.imagej:imagej
-            // io.scif:scifio
-            if (art.startsWith(dupl))
-                art = art.drop(dupl.length).ifEmpty { "core" }
-            if(art[0] == '-')
-                art = art.drop(1)
-            val gav = "$group:$art:$version"
+            var (group, artifact, vers) = dep.gav
+            vers = versions[vers.drop(2).dropLast(9)]!! // ${batch-processor.version}
+            val gav = "$group:$artifact:$vers"
             if (gav !in deps) { // skip duplicates, ie <classifier>tests</classifier>
+                val lib = Lib.getCurrent(group)
+                val name = lib.name
+                // org.scijava:scijava-cache
+                // net.imagej:imagej
+                // io.scif:scifio
+                // org.eclipse.swt:org.eclipse.swt.cocoa.macosx
+                var art = artifact.camelCase
+                if (art.contains(name, ignoreCase = true)) {
+                    val index = art.indexOf(name, ignoreCase = true)
+                    art = art.drop(index + name.length)
+                }
+                art = art.decapitalize()
                 deps += gav
-                println("catalog(${catalog(group).ref}).alias(${art.camelCase}).to($group:$art:$version)")
+                lib.catalog.appendLine("$art = \"$gav\"")
+                println("catalog($name).alias($art).to($gav)")
             }
         }
     }

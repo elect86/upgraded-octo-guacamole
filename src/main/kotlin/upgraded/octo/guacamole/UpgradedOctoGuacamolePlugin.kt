@@ -109,56 +109,64 @@ fun parseProps(node: Node) {
     }
 }
 
-enum class Lib(custom: String? = null) {
-    libs, sciJava, imagej, imglib2, scifio("scif");
+enum class Lib(val group: Array<String> = emptyArray()) {
+    sciJava(arrayOf("org.scijava")),
+    imagej(arrayOf("net.imagej")),
+    imglib2(arrayOf("net.imglib2")),
+    scifio(arrayOf("io.scif")),
+    fiji(arrayOf("sc.fiji")),
+    n5(arrayOf("org.janelia.saalfeldlab")),
+    bonej(arrayOf("org.bonej")),
+    ome(arrayOf("org.openmicroscopy", "ome")),
+    groovy(arrayOf("org.codehaus.groovy")),
+    batik(arrayOf("org.apache.xmlgraphics")),
+    swt(arrayOf("org.eclipse.swt")),
+    jetty(arrayOf("org.eclipse.jetty")),
+    kotlin(arrayOf("org.jetbrains.kotlin")),
+    libs;
 
-    val ref = custom ?: name
+    val ref: String
+        get() = if (this == scifio) "scif" else name
 
-    val isLast: Boolean
-        get() = values().last() == this
+    val filename: String
+        get() = when (this) {
+            libs -> "dependencies"
+            else -> name
+        }
 
-    val next: Lib
-        get() = values()[ordinal + 1]
+    val catalog = StringBuilder("[dependencies]\n")
+
+    companion object {
+        fun getCurrent(group: String) = values().find { group in it.group } ?: libs
+    }
 }
 
 operator fun String.contains(lib: Lib) = contains(lib.ref, ignoreCase = true)
 
 fun MutableVersionCatalogContainer.parseDeps(node: Node) {
 
-    var lib = Lib.values()[1] // libs is default, let's fill first all the others that come first in the given order
-
-    fun catalog(group: String): VersionCatalogBuilder {
-        lib = when {
-            lib in group -> lib // sciJava in org.scijava
-            !lib.isLast -> {  // current lib is terminated
-                lib = lib.next
-                lib
-            }
-            else -> Lib.libs // default, misc
-        }
-        return findByName(lib.ref) ?: create(lib.ref)
-    }
+    var lib = Lib.values().first()
 
     for (i in 0 until node.childNodes.length) {
         val dep = node.childNodes.item(i)
 
         if (dep.nodeType == Node.ELEMENT_NODE) {
 
-            val (group, artifact, vers) = dep.gav
+            var (group, art, vers) = dep.gav
             val version = versions[vers.drop(2).dropLast(9)]!! // ${batch-processor.version}
-            val dupl = group.substringAfterLast('.')
-            // org.scijava:scijava-cache
-            // net.imagej:imagej
-            // io.scif:scifio
-            var art = artifact
-            if (art.startsWith(dupl))
-                art = art.drop(dupl.length).ifEmpty { "core" }
-            if (art[0] == '-')
-                art = art.drop(1)
-            val gav = "$group:$artifact:$version"
+            val gav = "$group:$art:$version"
             if (gav !in deps) { // skip duplicates, ie <classifier>tests</classifier>
+                val dupl = lib.name
+                // org.scijava:scijava-cache
+                // net.imagej:imagej
+                // io.scif:scifio
+                if (art.startsWith(dupl))
+                    art = art.drop(dupl.length).ifEmpty { "core" }
+                if (art[0] == '-')
+                    art = art.drop(1)
                 deps += gav
-                catalog(group).alias(art).to(gav)
+                val catalog = findByName(lib.name) ?: create(lib.name)
+                catalog.alias(art.camelCase).to(gav)
             }
         }
     }
@@ -174,7 +182,7 @@ val String.camelCase: String
         val builder = StringBuilder()
         var capitalize = false
         for (c in this)
-            if (c == '-' || c == '_')
+            if (c == '-' || c == '_' || c == '.')
                 capitalize = true
             else {
                 builder.append(when {

@@ -1,0 +1,12 @@
+[dependencies]
+compilerEmbeddable = "org.jetbrains.kotlin:kotlin-compiler-embeddable:1.4.21"
+daemonEmbeddable = "org.jetbrains.kotlin:kotlin-daemon-embeddable:1.4.21"
+reflect = "org.jetbrains.kotlin:kotlin-reflect:1.4.21"
+scriptRuntime = "org.jetbrains.kotlin:kotlin-script-runtime:1.4.21"
+scriptUtil = "org.jetbrains.kotlin:kotlin-script-util:1.4.21"
+scriptingCommon = "org.jetbrains.kotlin:kotlin-scripting-common:1.4.21"
+scriptingCompilerEmbeddable = "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.4.21"
+scriptingJvm = "org.jetbrains.kotlin:kotlin-scripting-jvm:1.4.21"
+stdlib = "org.jetbrains.kotlin:kotlin-stdlib:1.4.21"
+stdlibCommon = "org.jetbrains.kotlin:kotlin-stdlib-common:1.4.21"
+stdlibJdk8 = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.21"

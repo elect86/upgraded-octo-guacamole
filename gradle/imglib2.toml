@@ -1,0 +1,13 @@
+[dependencies]
+ = "net.imglib2:imglib2:5.11.1"
+algorithm = "net.imglib2:imglib2-algorithm:0.11.2"
+algorithmFft = "net.imglib2:imglib2-algorithm-fft:0.2.0"
+algorithmGpl = "net.imglib2:imglib2-algorithm-gpl:0.2.5"
+cache = "net.imglib2:imglib2-cache:1.0.0-beta-15"
+ij = "net.imglib2:imglib2-ij:2.0.0-beta-46"
+realtransform = "net.imglib2:imglib2-realtransform:3.1.0"
+roi = "net.imglib2:imglib2-roi:0.10.4"
+script = "net.imglib2:imglib2-script:0.2.4"
+ui = "net.imglib2:imglib2-ui:2.0.1"
+unsafe = "net.imglib2:imglib2-unsafe:0.4.0"
+labelMultisets = "net.imglib2:imglib2-label-multisets:0.9.0"

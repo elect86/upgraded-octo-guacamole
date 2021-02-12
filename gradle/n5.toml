@@ -1,0 +1,9 @@
+[dependencies]
+ = "org.janelia.saalfeldlab:n5:2.2.1"
+awsS3 = "org.janelia.saalfeldlab:n5-aws-s3:3.1.3"
+blosc = "org.janelia.saalfeldlab:n5-blosc:1.1.0"
+googleCloud = "org.janelia.saalfeldlab:n5-google-cloud:3.2.2"
+hdf5 = "org.janelia.saalfeldlab:n5-hdf5:1.1.0"
+imglib2 = "org.janelia.saalfeldlab:n5-imglib2:3.5.1"
+viewerFiji = "org.janelia.saalfeldlab:n5-viewer_fiji:2.2.0"
+zarr = "org.janelia.saalfeldlab:n5-zarr:0.0.4"
